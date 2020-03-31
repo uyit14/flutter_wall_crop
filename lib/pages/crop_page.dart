@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutterwallcrop/blocs/crop_photo_bloc.dart';
 import 'package:flutterwallcrop/models/wall_photo_data.dart';
 import 'package:flutterwallcrop/widgets/image_crop_widget.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
@@ -13,7 +14,7 @@ class CropPage extends StatefulWidget {
 }
 
 class _CropPageState extends State<CropPage> {
-  final cropKey = GlobalKey<ImageCropState>();
+  final cropKey = GlobalKey<ImageCroppState>();
   PermissionHandler _permissionHandler = PermissionHandler();
 
   @override
@@ -21,6 +22,8 @@ class _CropPageState extends State<CropPage> {
     super.initState();
     _listenForPermissionStatus();
   }
+
+
 
   void _listenForPermissionStatus() {
     final Future<PermissionStatus> statusFuture =
@@ -42,7 +45,6 @@ class _CropPageState extends State<CropPage> {
     final WallPhotoData wallPhotoData = args['wallPhotoData'];
     //final String path = args['wallPhotoData'];
     final cropPhotoBloc = Provider.of<CropPhotoBloc>(context);
-  //String path = "/storage/emulated/0/DCIM/Camera/IMG_20200219_083109.jpg";
   File file = File(wallPhotoData.path);
 
     return Scaffold(
@@ -52,7 +54,7 @@ class _CropPageState extends State<CropPage> {
       body: Stack(
         children: <Widget>[
           Container(
-              child: ImageCrop.file(file, key: cropKey, maximumScale: 3.0, wallPhotoData: wallPhotoData,)
+              child: ImageCropp.file(file, key: cropKey, maximumScale: 3.0, wallPhotoData: wallPhotoData,)
           ),
           Positioned(
             bottom: 15.0,

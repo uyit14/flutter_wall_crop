@@ -10,7 +10,7 @@ class WallPhotoData{
   final String path;
   final File croppedFile;
   final double scale;
-  final Crop crop;
+  final Cropp crop;
 
   WallPhotoData({
     @required this.type,
@@ -23,11 +23,11 @@ class WallPhotoData{
   });
 }
 
-class Crop{
+class Cropp{
   double left;
   double top;
   double width;
   double height;
 
-  Crop({@required this.left, @required this.top, @required this.width, @required this.height});
+  Cropp({@required this.left, @required this.top, @required this.width, @required this.height});
 }

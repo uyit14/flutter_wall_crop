@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutterwallcrop/blocs/crop_photo_bloc.dart';
 import 'package:flutterwallcrop/models/wall_photo_data.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
@@ -17,6 +18,14 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    getImage();
+  }
+
+  Future getImage() async {
+    var image = await ImagePicker.pickImage(source: ImageSource.gallery);
+    setState(() {
+      _path = image.path;
+    });
   }
 
   @override

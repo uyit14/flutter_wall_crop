@@ -8,36 +8,37 @@ import 'package:flutterwallcrop/models/wall_photo_data.dart';
 
 import 'crop_method.dart';
 import 'crop_painter.dart';
+import 'package:image_crop/image_crop.dart';
 
 enum _CropAction { none, moving, scaling }
 
-class ImageCrop extends StatefulWidget {
+class ImageCropp extends StatefulWidget {
   final ImageProvider image;
   final double maximumScale;
   final WallPhotoData wallPhotoData;
 
-  ImageCrop.network(String imageUrl,
+  ImageCropp.network(String imageUrl,
       {Key key, this.maximumScale, this.wallPhotoData})
       : image = NetworkImage(imageUrl),
         assert(maximumScale != null),
         super(key: key);
 
-  ImageCrop.asset(String assetName,
+  ImageCropp.asset(String assetName,
       {Key key, this.maximumScale, this.wallPhotoData})
       : image = AssetImage(assetName),
         assert(maximumScale != null),
         super(key: key);
 
-  ImageCrop.file(File file, {Key key, this.maximumScale, this.wallPhotoData})
+  ImageCropp.file(File file, {Key key, this.maximumScale, this.wallPhotoData})
       : image = FileImage(file),
         assert(maximumScale != null),
         super(key: key);
 
   @override
-  ImageCropState createState() => ImageCropState();
+  ImageCroppState createState() => ImageCroppState();
 }
 
-class ImageCropState extends State<ImageCrop>
+class ImageCroppState extends State<ImageCropp>
     with TickerProviderStateMixin, Drag {
   final _surfaceKey = GlobalKey();
   AnimationController _activeController;
@@ -55,6 +56,8 @@ class ImageCropState extends State<ImageCrop>
   Tween<Rect> _viewTween;
   Tween<double> _scaleTween;
   ImageStreamListener _imageListener;
+  double leftWallCrop;
+  double topWallCrop;
 
   //double get scale => _area.shortestSide / _scale;
 
@@ -106,7 +109,7 @@ class ImageCropState extends State<ImageCrop>
   }
 
   @override
-  void didUpdateWidget(ImageCrop oldWidget) {
+  void didUpdateWidget(ImageCropp oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.image != oldWidget.image) {
       _getImage();
@@ -120,7 +123,11 @@ class ImageCropState extends State<ImageCrop>
     print("AREA.height: " + _view.height.toString());
     print("_view.left: " + _view.left.toString());
     print("_view.top: " + _view.top.toString());
-    final croppedFile = await CropMethod.cropImage(
+//    final croppedFile = await CropMethod.cropImage(
+//      file: file,
+//      area: area,
+//    );
+    final croppedFile = await ImageCrop.cropImage(
       file: file,
       area: area,
     );
@@ -128,11 +135,46 @@ class ImageCropState extends State<ImageCrop>
         path: file.path,
         croppedFile: croppedFile,
         scale: _scale,
-        crop: Crop(
+        crop: Cropp(
             left: _view.left,
             top: _view.top,
             width: area.width,
             height: area.height));
+  }
+
+  void rectToDp(double left, double top){
+    double leftDp = left * _image.width * _scale * _ratio;
+    double topDp = top * _image.height * _scale * _ratio;
+    //
+    if(leftDp < defaultLeftMargin){
+      leftWallCrop = defaultLeftMargin - leftDp;
+    }else{
+      leftWallCrop = 0;
+    }
+    //
+    if(topDp < defaultTopMargin){
+      topWallCrop = defaultTopMargin - topDp;
+    }else{
+      topWallCrop = 0;
+    }
+  }
+
+  void dpToRect(double leftWallCrop, double topWallCrop){
+    double leftDp;
+    if(leftWallCrop != 0){
+      leftDp = defaultLeftMargin - leftWallCrop;
+    }else{
+      leftDp = defaultLeftMargin;
+    }
+    double left = leftDp / (_image.width * _scale * _ratio);
+    //
+    double topDp;
+    if(topWallCrop != 0){
+      topDp = defaultTopMargin - topWallCrop;
+    }else{
+      topDp = defaultTopMargin;
+    }
+    double top = topDp / (_image.height * _scale * _ratio);
   }
 
   void _getImage({bool force: false}) {
