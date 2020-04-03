@@ -23,6 +23,7 @@ class _HomePageState extends State<HomePage> {
 
   Future getImage() async {
     var image = await ImagePicker.pickImage(source: ImageSource.gallery);
+    print("_path: " + image.path);
     setState(() {
       _path = image.path;
     });

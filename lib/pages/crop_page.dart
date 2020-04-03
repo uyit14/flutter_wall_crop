@@ -77,7 +77,7 @@ class _CropPageState extends State<CropPage> {
           final crop = cropKey.currentState;
           final _wallPhotoData = await crop.cropCompleted(File(wallPhotoData.path));
           cropPhotoBloc.onCropDone(_wallPhotoData);
-          Navigator.pop(context);
+          Navigator.pop(context, _wallPhotoData);
         },
       ),
     );

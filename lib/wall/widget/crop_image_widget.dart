@@ -1,44 +1,40 @@
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutterwallcrop/models/wall_photo_data.dart';
-
-import 'crop_method.dart';
-import 'crop_painter.dart';
+import 'package:flutterwallcrop/wall/viewmodel/photo_crop_viewmodel.dart';
 import 'package:image_crop/image_crop.dart';
+import 'crop_painter.dart';
 
 enum _CropAction { none, moving, scaling }
 
-class ImageCropp extends StatefulWidget {
+class WallImageCrop extends StatefulWidget {
   final ImageProvider image;
   final double maximumScale;
-  final WallPhotoData wallPhotoData;
 
-  ImageCropp.network(String imageUrl,
-      {Key key, this.maximumScale, this.wallPhotoData})
+  WallImageCrop.network(String imageUrl,
+      {Key key, this.maximumScale})
       : image = NetworkImage(imageUrl),
         assert(maximumScale != null),
         super(key: key);
 
-  ImageCropp.asset(String assetName,
-      {Key key, this.maximumScale, this.wallPhotoData})
+  WallImageCrop.asset(String assetName,
+      {Key key, this.maximumScale})
       : image = AssetImage(assetName),
         assert(maximumScale != null),
         super(key: key);
 
-  ImageCropp.file(File file, {Key key, this.maximumScale, this.wallPhotoData})
+  WallImageCrop.file(File file, {Key key, this.maximumScale})
       : image = FileImage(file),
         assert(maximumScale != null),
         super(key: key);
 
   @override
-  ImageCroppState createState() => ImageCroppState();
+  WallImageCropState createState() => WallImageCropState();
 }
 
-class ImageCroppState extends State<ImageCropp>
+class WallImageCropState extends State<WallImageCrop>
     with TickerProviderStateMixin, Drag {
   final _surfaceKey = GlobalKey();
   AnimationController _activeController;
@@ -56,23 +52,19 @@ class ImageCroppState extends State<ImageCropp>
   Tween<Rect> _viewTween;
   Tween<double> _scaleTween;
   ImageStreamListener _imageListener;
-  double leftWallCrop;
-  double topWallCrop;
-
-  //double get scale => _area.shortestSide / _scale;
+  int defaultLeftMargin;
+  int defaultTopMargin;
 
   //get crop frame size
   Rect get area {
-//    widget.wallPhotoData.crop != null ? widget.wallPhotoData.crop.left : (viewWidth - 1.0) / 2,
-//    widget.wallPhotoData.crop != null ? widget.wallPhotoData.crop.top : (viewHeight - 1.0) / 2,
     return _view.isEmpty
         ? null
         : Rect.fromLTWH(
-            _area.left * _view.width / _scale - _view.left,
-            _area.top * _view.height / _scale - _view.top,
-            _area.width * _view.width / _scale,
-            _area.height * _view.height / _scale,
-          );
+      _area.left * _view.width / _scale - _view.left,
+      _area.top * _view.height / _scale - _view.top,
+      _area.width * _view.width / _scale,
+      _area.height * _view.height / _scale,
+    );
   }
 
   bool get _isEnabled => !_view.isEmpty && _image != null;
@@ -109,7 +101,7 @@ class ImageCroppState extends State<ImageCropp>
   }
 
   @override
-  void didUpdateWidget(ImageCropp oldWidget) {
+  void didUpdateWidget(WallImageCrop oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.image != oldWidget.image) {
       _getImage();
@@ -117,68 +109,46 @@ class ImageCroppState extends State<ImageCropp>
     _activate(1.0);
   }
 
-  Future<WallPhotoData> cropCompleted(File file) async {
-    print("AREA: " + area.size.toString());
-    print("AREA.width: " + _view.width.toString());
-    print("AREA.height: " + _view.height.toString());
-    print("_view.left: " + _view.left.toString());
-    print("_view.top: " + _view.top.toString());
-//    final croppedFile = await CropMethod.cropImage(
-//      file: file,
-//      area: area,
-//    );
-    print("area: " + area.toString());
+  //using crop method of img_crop lib
+  Future<PhotoCropViewModel> cropCompleted(File file) async {
     final croppedFile = await ImageCrop.cropImage(
       file: file,
       area: area,
     );
-    return WallPhotoData(
-        path: file.path,
-        croppedFile: croppedFile,
-        scale: _scale,
-        crop: Cropp(
-            left: _view.left,
-            top: _view.top,
-            width: area.width,
-            height: area.height));
+    return PhotoCropViewModel(
+      path: file.path,
+      croppedFile: croppedFile,
+      scale: _scale,
+      cropViewModel: CropViewModel(
+        left: leftRatioToLeftWallCrop(_view.left),
+        top: topRatioToTopWallCrop(_view.top),
+        width: _image.width/_scale,
+        height: _image.height/_scale
+      )
+    );
   }
 
-//  void rectToDp(double left, double top){
-//    double leftDp = left * _image.width * _scale * _ratio;
-//    double topDp = top * _image.height * _scale * _ratio;
-//    //
-//    if(leftDp < defaultLeftMargin){
-//      leftWallCrop = defaultLeftMargin - leftDp;
-//    }else{
-//      leftWallCrop = 0;
-//    }
-//    //
-//    if(topDp < defaultTopMargin){
-//      topWallCrop = defaultTopMargin - topDp;
-//    }else{
-//      topWallCrop = 0;
-//    }
-//  }
-//
-//  ct1 = 222.5
-//
-//  void dpToRect(double leftWallCrop, double topWallCrop){
-//    double leftDp;
-//    if(leftWallCrop != 0){
-//      leftDp = defaultLeftMargin - leftWallCrop;
-//    }else{
-//      leftDp = defaultLeftMargin;
-//    }
-//    double left = leftDp / (_image.width * _scale * _ratio);
-//    //
-//    double topDp;
-//    if(topWallCrop != 0){
-//      topDp = defaultTopMargin - topWallCrop;
-//    }else{
-//      topDp = defaultTopMargin;
-//    }
-//    double top = topDp / (_image.height * _scale * _ratio);
-//  }
+  //calculate left margin between image and boundary
+  int leftRatioToLeftWallCrop(double leftRatio){
+    int leftDp = (leftRatio * _image.width * _scale * _ratio).toInt();
+    if(leftDp < defaultLeftMargin){
+      return defaultLeftMargin - leftDp;
+    }else{
+      return 0;
+    }
+  }
+
+  //calculate top margin between image and boundary
+  int topRatioToTopWallCrop(double topRatio){
+    int topDp = (topRatio * _image.height * _scale * _ratio).toInt();
+    defaultTopMargin = defaultTopMargin - 13; //TODO - 13 is appbar size - will calculate later
+    if(topDp < defaultTopMargin){
+      return defaultTopMargin - topDp;
+    }else{
+      return 0;
+    }
+  }
+
 
   void _getImage({bool force: false}) {
     final oldImageStream = _imageStream;
@@ -189,6 +159,7 @@ class ImageCroppState extends State<ImageCropp>
       _imageStream.addListener(_imageListener);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -213,6 +184,7 @@ class ImageCroppState extends State<ImageCropp>
     );
   }
 
+  //when hold on an image
   void _activate(double val) {
     _activeController.animateTo(
       val,
@@ -221,6 +193,7 @@ class ImageCroppState extends State<ImageCropp>
     );
   }
 
+  //get boundary of screen
   Size get _boundaries {
     return _surfaceKey.currentContext.size;
   }
@@ -242,17 +215,20 @@ class ImageCroppState extends State<ImageCropp>
       return Rect.zero;
     }
     final _deviceWidth =
-        MediaQuery.of(context).size.width;
+        MediaQuery.of(context).size.width; //screen width
     final _deviceHeight =
-        MediaQuery.of(context).size.height;
+        MediaQuery.of(context).size.height; //screen height
     final _areaOffsetWidth = _deviceWidth / 5; //vertical frame margin
-    final _areaOffsetHeight = _deviceHeight / 3; ////horizontal frame margin
+    defaultLeftMargin = _areaOffsetWidth~/2; //left margin = total vertical margin / 2
+    final _areaOffsetHeight = _deviceHeight / 3; //horizontal frame margin
     final _areaOffsetRadioWidth = _areaOffsetWidth / _deviceWidth;
     final _areaOffsetRadioHeight = _areaOffsetHeight / _deviceHeight;
     final width = 1.0 - _areaOffsetRadioWidth;
-    //TODO - layout type dynamic
-    //line 278 - com.samsung.wall.presentation.wall.mywall/MyWallMoveAndCropFragment
+    //TODO - when combine with step5, will create function get cropType later
     int cropType = 1;
+    //get size.width of boundary
+    double _boundaryWidthSize = _deviceWidth - _areaOffsetWidth;
+    defaultTopMargin = cropType == 1 ? (_deviceHeight - _boundaryWidthSize)~/2 : _areaOffsetHeight~/2; //top margin calculated based on cropType
     final height = cropType == 1
         ? (imageWidth * viewWidth * width) / (imageHeight * viewHeight * 1.0)
         : 1.0 - _areaOffsetRadioHeight;
@@ -263,9 +239,7 @@ class ImageCroppState extends State<ImageCropp>
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       setState(() {
         _image = imageInfo.image;
-        //TODO - size image
-        print(("wallPhotoData.scale: " + widget.wallPhotoData.scale.toString()));
-        _scale = widget.wallPhotoData.scale != null ? widget.wallPhotoData.scale : imageInfo.scale;
+        _scale = imageInfo.scale;
 
         // return larger value
         _ratio = max(
@@ -282,11 +256,11 @@ class ImageCroppState extends State<ImageCropp>
           imageWidth: _image.width,
           imageHeight: _image.height,
         );
-        print("_area: " + _area.toString());
-        //TODO - set initial image position here
+
+        //set initial image position
         _view = Rect.fromLTWH(
-          widget.wallPhotoData.crop != null ? widget.wallPhotoData.crop.left : (viewWidth - 1.0) / 2,
-          widget.wallPhotoData.crop != null ? widget.wallPhotoData.crop.top : (viewHeight - 1.0) / 2,
+          (viewWidth - 1.0) / 2,
+          (viewHeight - 1.0) / 2,
           viewWidth,
           viewHeight,
         );
@@ -307,22 +281,22 @@ class ImageCroppState extends State<ImageCropp>
   //for animation back if move outside boundary
   Rect _getViewInBoundaries(double scale) {
     return Offset(
-          max(
-            min(
-              _view.left,
-              _area.left * _view.width / scale,
-            ),
-            _area.right * _view.width / scale - 1.0,
-          ),
-          max(
-            min(
-              _view.top,
-              _area.top * _view.height / scale,
-            ),
-            _area.bottom * _view.height / scale - 1.0,
-          ),
-        ) &
-        _view.size;
+      max(
+        min(
+          _view.left,
+          _area.left * _view.width / scale,
+        ),
+        _area.right * _view.width / scale - 1.0,
+      ),
+      max(
+        min(
+          _view.top,
+          _area.top * _view.height / scale,
+        ),
+        _area.bottom * _view.height / scale - 1.0,
+      ),
+    ) &
+    _view.size;
   }
 
   double get _maximumScale => widget.maximumScale;
