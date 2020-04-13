@@ -265,7 +265,7 @@ class ImageCroppState extends State<ImageCropp>
         _image = imageInfo.image;
         //TODO - size image
         print(("wallPhotoData.scale: " + widget.wallPhotoData.scale.toString()));
-        _scale = widget.wallPhotoData.scale != null ? widget.wallPhotoData.scale : imageInfo.scale;
+        _scale = imageInfo.scale;
 
         // return larger value
         _ratio = max(
@@ -284,11 +284,14 @@ class ImageCroppState extends State<ImageCropp>
         );
         print("_area: " + _area.toString());
         //TODO - set initial image position here
+        final viewWidth2 = _boundaries.width / (_image.width * 1.0 * _ratio);
+        final viewHeight2 =
+            _boundaries.height / (_image.height * 1.0 * _ratio);
         _view = Rect.fromLTWH(
-          widget.wallPhotoData.crop != null ? widget.wallPhotoData.crop.left : (viewWidth - 1.0) / 2,
-          widget.wallPhotoData.crop != null ? widget.wallPhotoData.crop.top : (viewHeight - 1.0) / 2,
-          viewWidth,
-          viewHeight,
+          (viewWidth - 1.0) / 2,
+          (viewHeight - 1.0) / 2,
+          viewWidth2,
+          viewHeight2,
         );
       });
     });
@@ -306,6 +309,8 @@ class ImageCroppState extends State<ImageCropp>
 
   //for animation back if move outside boundary
   Rect _getViewInBoundaries(double scale) {
+    print("____scale: " + (scale).toString());
+    print("____size" + _view.size.toString());
     return Offset(
           max(
             min(
@@ -369,6 +374,7 @@ class ImageCroppState extends State<ImageCropp>
         );
       });
     }
+
   }
 
   void _handleScaleEnd(ScaleEndDetails details) {
@@ -381,6 +387,12 @@ class ImageCroppState extends State<ImageCropp>
       end: targetScale,
     );
 
+    print("_getViewInBoundaries.left: " + _getViewInBoundaries(targetScale).left.toString());
+    print("_getViewInBoundaries.top: " + _getViewInBoundaries(targetScale).top.toString());
+    print("_getViewInBoundaries.right: " + _getViewInBoundaries(targetScale).right.toString());
+    print("_getViewInBoundaries.bottom: " + _getViewInBoundaries(targetScale).bottom.toString());
+    print("_getViewInBoundaries.width: " + _getViewInBoundaries(targetScale).width.toString());
+    print("_getViewInBoundaries.height: " + _getViewInBoundaries(targetScale).height.toString());
     _startView = _view;
     _viewTween = RectTween(
       begin: _view,
